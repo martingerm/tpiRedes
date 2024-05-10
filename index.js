@@ -2,6 +2,8 @@ const express = require('express');
 const axios = require('axios');
 require('dotenv').config();
 const bodyParser = require('body-parser');
+const { Pool } = require('pg');
+
 
 
 const app = express();
@@ -16,6 +18,13 @@ app.use(express.json());
 
 const jwt = require('jsonwebtoken');
 const JWT_SECRET = process.env.JWT_SECRET;
+
+const pool = new Pool({
+  connectionString: process.env.DATABASE_URL,
+  ssl: {
+    rejectUnauthorized: false
+  }
+});
 
 // Verificar el token JWT
 const verifyToken = (req, res, next) => {
@@ -55,7 +64,7 @@ app.post('/login', (req, res) => {
 });
 
 
-app.post('/registro', verifyToken, async (req, res) => {
+app.post('/registro',  async (req, res) => {
     try {
       const { user, password, nombre, apellido } = req.body;
   
@@ -128,6 +137,9 @@ app.post('/registro', verifyToken, async (req, res) => {
           res.sendFile(__dirname + '/index.html');
         });
         
+
+        
+      
 
 
 

@@ -1,10 +1,14 @@
 const express = require('express');
 const { Pool } = require('pg');
 require('dotenv').config();
+const cors = require('cors');
+
 
 const app = express();
 const PORT2 = process.env.PORT2;
 app.use(express.json());
+app.use(cors());
+
 
 
 const pool = new Pool({
@@ -55,7 +59,7 @@ app.post('/registro_usuario', async (req, res) => {
     try {
         const { user, rol } = req.body;
         const client = await pool.connect();
-       await pool.query('UPDATE Usuario2 SET rol = $1 WHERE nombre_usuario = $2', [rol, user]);
+       await pool.query('UPDATE Usuario3 SET rol = $1 WHERE nombre_usuario = $2', [rol, user]);
     
         
         // Liberar el cliente de la pool
@@ -68,7 +72,38 @@ app.post('/registro_usuario', async (req, res) => {
         res.status(500).json({ error: 'Error al registrar el rol' });
       }
     });
+
+    app.get('/usuarios', async (req, res) => {
+      try {
+          const client = await pool.connect();
+          const result = await client.query('SELECT * FROM Usuario3');
+          const usuarios = result.rows;
+          
+          // Liberar el cliente de la pool
+          client.release();
+          
+          res.json({ usuarios });
+      } catch (error) {
+          console.error('Error al obtener usuarios:', error);
+          res.status(500).json({ error: 'Error al obtener usuarios' });
+      }
+  });
     
+  app.get('/usuarioyestado', async (req, res) => {
+    try {
+      const client = await pool.connect();
+      const query = 'SELECT nombre_usuario, estado FROM Usuario3';
+      const result = await client.query(query);
+      // Liberar el cliente de la pool
+      client.release();
+      // Enviar los datos al cliente
+      res.json(result.rows);
+    } catch (error) {
+      console.error('Error al obtener usuarios y estados:', error);
+      res.status(500).json({ error: 'Error al obtener usuarios y estados' });
+    }
+  });
+  
 
  
   
