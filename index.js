@@ -50,18 +50,42 @@ const generateToken = (user) => {
   return jwt.sign(user, JWT_SECRET, { expiresIn: '1h' });
 };
 
-app.post('/login', (req, res) => {
-  const { username, password } = req.body;
-  console.log('Datos recibidos:', req.body);
-  //Lógica de user y pass
-  if (username === 'tpi' && password === '1234') {
-    const token = generateToken({ username });
-    res.json({ token }); //Devuelve token con 1h. de validez
-  } else {
-    console.log('hola');
-    res.status(401).json({ error: 'Credenciales incorrectas' });
-  }
-});
+  app.post('/login', async (req, res) => {
+    try {
+      let estado1 = 'deshabilitado'
+      const { username, password } = req.body;
+      console.log('Datos recibidos:', req.body);
+      
+      const client = await pool.connect();
+      const query = 'SELECT * FROM Usuario3 WHERE nombre_usuario = $1 ';
+      const result = await client.query(query, [username]);
+      const usuario = result.rows[0];
+      
+
+      // Comparar la contraseña almacenada en la base de datos con la proporcionada
+      if (usuario.contraseña !== password) {
+        client.release();
+        return res.status(401).json({ error: 'Contraseña incorrecta' });
+      }
+      console.log(usuario);
+
+      if (usuario.estado !== estado1) {
+       
+      // Generar y enviar el token
+        const token = generateToken(usuario); // Suponiendo que tienes una función para generar el token
+        client.release();
+        res.status(200).json({ message: 'Login exitoso', token });
+  
+    }  else {
+        res.status(200).json({ message: 'El usuario esta inhabilitado'});
+
+      }
+    } catch (error) {
+      console.error('Usuario incorrecto:', error);
+      res.status(500).json({ error: 'Usuario incorrecto' });
+    }
+  });
+
 
 
 app.post('/registro',  async (req, res) => {
@@ -104,7 +128,7 @@ app.post('/registro',  async (req, res) => {
     app.post('/suspension_usuario', verifyToken, async (req, res) => {
       try{
       const { user, estado } = req.body;
-      const response = await axios.post('http://localhost:6002/suspension', {
+      const response = await axios.post('http://localhost:6002/estado', {
         user,
         estado
       });
@@ -117,21 +141,7 @@ app.post('/registro',  async (req, res) => {
       }
       });
 
-      app.post('/habilitacion_usuario', verifyToken, async (req, res) => {
-        try{
-        const { user, estado } = req.body;
-        const response = await axios.post('http://localhost:6002/habilitacion', {
-          user,
-          estado
-        });
-    
-        const registro = response.data
-        res.json({ registro });
-        } catch (error) {
-         console.error(error);
-        res.status(500).json({ error: 'Error al cambiar el estado' });
-        }
-        });
+      
 
         app.get('/', (req, res) => {
           res.sendFile(__dirname + '/index.html');

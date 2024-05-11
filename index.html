@@ -116,8 +116,8 @@
         // Muestra el token en la consola del navegador
         console.log('Token:', responseData.token);
       } else {
-        // Si la respuesta no es exitosa, muestra el mensaje de error en la consola
-        console.error('Credenciales incorrectas:', response.statusText);
+        const errorResponseData = await response.json();
+       console.error('Error:', errorResponseData.error);
       }
     } catch (error) {
       // Si ocurre un error durante la solicitud, muestra el mensaje de error en la consola
